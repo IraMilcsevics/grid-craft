@@ -1,0 +1,33 @@
+{
+  "name": "gridcraft",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --noEmit",
+    "bench:domain": "tsx scripts/bench-domain.ts",
+    "bench:browser": "node scripts/bench-browser.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-table": "^9.3.1",
+    "@tanstack/react-virtual": "^3.14.19",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "fake-indexeddb": "^6.2.5",
+    "puppeteer-core": "^25.14.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
+  }
+}

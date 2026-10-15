@@ -1,0 +1,396 @@
+/* Grid: one scroll container. Header is sticky, body rows are absolutely positioned by the virtualizer. */
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  outline: none;
+  background: var(--bg);
+}
+.inner {
+  width: var(--row-w);
+  min-height: 100%;
+}
+.hrow,
+.row {
+  display: grid;
+  grid-template-columns: var(--cols);
+  width: var(--row-w);
+}
+.hrow {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 36px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.hcell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-right: 1px solid var(--line-soft);
+  user-select: none;
+  cursor: pointer;
+  min-width: 0;
+  font-weight: 500;
+}
+.hcell:hover {
+  background: var(--raised);
+}
+.hcell.idx {
+  justify-content: flex-end;
+  color: var(--faint);
+  font: 11px var(--font-data);
+  cursor: default;
+}
+.hcell.idx:hover {
+  background: transparent;
+}
+.hcell .ty {
+  font: 10px var(--font-data);
+  color: var(--faint);
+  flex: none;
+}
+.hcell .lbl {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hcell .srt {
+  margin-left: auto;
+  font: 11px var(--font-data);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.body {
+  position: relative;
+}
+.row {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: var(--row-h);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--panel);
+}
+.row.odd {
+  background: color-mix(in srgb, var(--panel) 70%, var(--bg));
+}
+.row:hover {
+  background: var(--raised);
+}
+.cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-right: 1px solid var(--line-soft);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.cell.idx {
+  justify-content: flex-end;
+  color: var(--faint);
+  font: 11px var(--font-data);
+}
+.cell.right {
+  justify-content: flex-end;
+  font: 12.5px var(--font-data);
+}
+.cell.mono {
+  font: 12.5px var(--font-data);
+}
+.cell.calc {
+  color: var(--muted);
+}
+.cell.bad {
+  background: var(--err-soft);
+  color: var(--err);
+}
+.cell.bad::after {
+  content: '!';
+  margin-left: auto;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--err);
+  color: var(--panel);
+  font: 700 10px var(--font-data);
+  display: grid;
+  place-items: center;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px 0 7px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+}
+.pill::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--c);
+}
+.dots {
+  letter-spacing: 2px;
+  color: var(--accent);
+  font-size: 11px;
+}
+.dots s {
+  text-decoration: none;
+  color: var(--line);
+}
+.muted-empty {
+  opacity: 0.7;
+}
+
+/* sticky header block: column headers + filter row */
+.sticky-head {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+.sticky-head .hrow {
+  position: static;
+}
+.frow {
+  display: grid;
+  grid-template-columns: var(--cols);
+  width: var(--row-w);
+  height: 36px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.fcell {
+  padding: 4px 5px;
+  border-right: 1px solid var(--line-soft);
+  min-width: 0;
+}
+.fcell input,
+.fcell select {
+  width: 100%;
+  height: 26px;
+  padding: 0 7px;
+  background: var(--bg);
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  font: 12px var(--font-data);
+}
+.fcell select {
+  font-family: var(--font-ui);
+}
+.fcell input::placeholder {
+  color: var(--faint);
+}
+.fcell input.active,
+.fcell select.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.fcell input.invalid {
+  border-color: var(--err);
+  background: var(--err-soft);
+}
+.empty {
+  position: sticky;
+  left: 0;
+  width: min(100vw, 520px);
+  height: 180px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+/* selection, dirty marker and the inline editor */
+.cell {
+  position: relative;
+  cursor: cell;
+}
+.cell.calc {
+  cursor: default;
+}
+.cell.sel {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  background: var(--sel);
+}
+.cell.bad.sel {
+  background: var(--sel);
+}
+.cell.dirty::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-style: solid;
+  border-width: 7px 7px 0 0;
+  border-color: var(--accent) transparent transparent transparent;
+}
+.scroller:focus-visible {
+  outline: none;
+}
+.row.editing-row {
+  z-index: 3;
+}
+.cell.editing {
+  padding: 0;
+  overflow: visible;
+  background: var(--raised);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.cell.editing::after {
+  display: none;
+}
+.editor {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.editor input,
+.editor select {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0 10px;
+  outline: 0;
+  font: inherit;
+}
+.editor input.bad {
+  box-shadow: inset 0 0 0 2px var(--err);
+  color: var(--err);
+}
+.cell.right .editor input {
+  text-align: right;
+}
+.edit-tip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 6;
+  width: max-content;
+  max-width: 280px;
+  white-space: normal;
+  background: var(--err);
+  color: var(--panel);
+  padding: 5px 9px;
+  border-radius: 5px;
+  font: 500 12px var(--font-ui);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+.editor.shake {
+  animation: shake 0.25s;
+}
+@keyframes shake {
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .editor.shake {
+    animation: none;
+  }
+}
+
+/* column resize handle and drag-reorder indicators */
+.hcell {
+  overflow: visible;
+}
+.rs {
+  position: absolute;
+  right: -3px;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  cursor: col-resize;
+  z-index: 2;
+  touch-action: none;
+}
+.rs:hover,
+.rs.active {
+  background: linear-gradient(90deg, transparent 2px, var(--accent) 2px, var(--accent) 4px, transparent 4px);
+}
+.hcell.dragging {
+  opacity: 0.4;
+}
+.hcell.drop-before {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.hcell.drop-after {
+  box-shadow: inset -3px 0 0 var(--accent);
+}
+
+/* totals row, pinned to the bottom of the scroll area */
+.inner {
+  display: flex;
+  flex-direction: column;
+}
+.body {
+  flex: none;
+}
+.sticky-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin-top: auto;
+}
+.arow {
+  display: grid;
+  grid-template-columns: var(--cols);
+  width: var(--row-w);
+  height: 38px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+}
+.acell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-right: 1px solid var(--line-soft);
+  font: 12px var(--font-data);
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+.acell.right {
+  justify-content: flex-end;
+}
+.acell.idx {
+  justify-content: flex-end;
+  color: var(--faint);
+  cursor: help;
+}
+.acell em {
+  font-style: normal;
+  color: var(--faint);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.acell.skipped::after {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--err);
+  margin-left: 2px;
+}

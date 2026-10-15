@@ -1,0 +1,54 @@
+/* Design tokens. Dark is the default look; light follows the OS preference. */
+:root {
+  --bg: #0c0f14;
+  --panel: #11151c;
+  --raised: #181d27;
+  --line: #252c38;
+  --line-soft: #1a2029;
+  --fg: #e5e9f0;
+  --muted: #8c96a7;
+  --faint: #596373;
+  --accent: #e9b44c;
+  --accent-ink: #1a1305;
+  --accent-soft: rgba(233, 180, 76, 0.14);
+  --sel: #1c2431;
+  --err: #ff6f7a;
+  --err-soft: rgba(255, 111, 122, 0.12);
+  --ok: #5fc08a;
+  --s-paid: #5fc08a;
+  --s-pending: #d6c46a;
+  --s-shipped: #6fb0ff;
+  --s-refunded: #b79cf0;
+  --s-cancelled: #7e899b;
+  --shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --font-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f3f4f7;
+    --panel: #ffffff;
+    --raised: #eceef3;
+    --line: #d9dde5;
+    --line-soft: #e6e9ef;
+    --fg: #161a22;
+    --muted: #596273;
+    --faint: #8a93a3;
+    --accent: #a86a00;
+    --accent-ink: #ffffff;
+    --accent-soft: rgba(168, 106, 0, 0.12);
+    --sel: #fbf1de;
+    --err: #c42b3a;
+    --err-soft: rgba(196, 43, 58, 0.1);
+    --ok: #1f8a55;
+    --s-paid: #1f8a55;
+    --s-pending: #7a6a1f;
+    --s-shipped: #2468b8;
+    --s-refunded: #7a4fb3;
+    --s-cancelled: #7b8494;
+    --shadow: 0 12px 40px rgba(20, 24, 34, 0.18);
+    color-scheme: light;
+  }
+}
