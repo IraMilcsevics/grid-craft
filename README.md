@@ -107,7 +107,7 @@ after a discarded warm-up. Full output is in [bench-results/browser.md](bench-re
 | Build CSV for every row | 1.2 ms | 13 ms | 115 ms |
 | Import CSV (worker, parse and validate) | 21 ms | 83 ms | 767 ms |
 
-The baseline is the cost of waiting for two frames, so subtract about 30 ms from the rows above it. Scrolling at 100,000 rows covers the
+The baseline is the cost of waiting for two frames, so subtract it from the rows above it. It moves between runs (about 10 to 30 ms on this machine), so compare rows within one run, not across runs. Scrolling at 100,000 rows covers the
 whole list in two seconds, so it is a harder test than at 1,000 rows. At 10,000 rows, which is the demo size, a filter adds 7 to 11 ms on top of
 the baseline, a single-column sort about 55 ms and a two-column sort about 80 ms.
 

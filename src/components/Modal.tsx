@@ -13,7 +13,11 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
 
   useEffect(() => {
     const dialog = ref.current
-    if (dialog && !dialog.open) dialog.showModal()
+    if (dialog && !dialog.open) {
+      dialog.showModal()
+      // Start inside the dialog without putting a focus ring on the close button.
+      dialog.querySelector<HTMLElement>('.modal-card')?.focus({ preventScroll: true })
+    }
   }, [])
 
   return (
@@ -26,7 +30,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         if (e.target === ref.current) ref.current?.close()
       }}
     >
-      <div className="modal-card">
+      <div className="modal-card" tabIndex={-1}>
         <header>
           <h2>{title}</h2>
           <button className="btn ghost" onClick={() => ref.current?.close()} aria-label="Close">

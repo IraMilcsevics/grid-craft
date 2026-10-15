@@ -857,7 +857,8 @@ select option {
   color: var(--fg);
 }
 select option:checked {
-  background-color: var(--accent-soft);
+  /* Opaque: the open list is drawn on its own surface, where a translucent tint would wash out the text. */
+  background-color: color-mix(in srgb, var(--accent) 24%, var(--panel));
 }
 .editor select {
   background-color: var(--raised);
@@ -1023,4 +1024,17 @@ select option:checked {
 .data-confirm p {
   margin: 0;
   color: var(--fg);
+}
+
+/* benchmark bars live in a table cell, so the track has to be a block to get a width */
+.bar-cell .bar-track {
+  display: block;
+}
+.modal-card:focus {
+  outline: none;
+}
+@media (max-width: 700px) {
+  .status .hint {
+    display: none;
+  }
 }
