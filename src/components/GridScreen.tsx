@@ -88,6 +88,7 @@ export function GridScreen({ session }: { session: Session }) {
         }}
         onOpen={setDialog}
       />
+      <main className="main">
       <Toolbar
         table={table}
         badRows={state.errorRows}
@@ -119,6 +120,7 @@ export function GridScreen({ session }: { session: Session }) {
         scrollKey={scrollKey}
         virtualize={virtualize}
       />
+      </main>
       <StatusBar
         table={table}
         mode={mode}

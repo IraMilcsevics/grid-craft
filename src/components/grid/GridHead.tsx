@@ -108,7 +108,7 @@ export function GridHead({ table, leaf }: { table: OrderTable; leaf: LeafColumns
         })}
       </div>
       <div className="frow" role="row">
-        <div className="fcell idx" />
+        <div className="fcell idx" role="gridcell" />
         {leaf.map((c) => (
           <FilterCell key={c.id} table={table} id={c.id as ColumnKey} />
         ))}

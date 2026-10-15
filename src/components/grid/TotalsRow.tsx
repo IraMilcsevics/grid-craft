@@ -14,9 +14,9 @@ interface TotalsRowProps {
 /** The row pinned to the bottom of the grid: counts, sums and averages over every filtered row. */
 export function TotalsRow({ columns, totals, hint }: TotalsRowProps) {
   return (
-    <div className="sticky-foot" role="row">
-      <div className="arow">
-        <div className="acell idx" title={hint}>
+    <div className="sticky-foot">
+      <div className="arow" role="row">
+        <div className="acell idx" role="gridcell" title={hint}>
           Σ
         </div>
         {columns.map((id) => (
@@ -41,6 +41,7 @@ function TotalCell({ id, totals }: { id: ColumnKey; totals: ColumnTotals | undef
   const skipped = totals && id !== 'customer' ? totals.skipped : 0
   return (
     <div
+      role="gridcell"
       className={`acell${meta.kind === 'number' ? ' right' : ''}${skipped ? ' skipped' : ''}`}
       title={skipped ? `${int.format(skipped)} invalid or missing values are not counted` : undefined}
     >

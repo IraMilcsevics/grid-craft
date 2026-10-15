@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import {
+  accessibilityProblems,
   BASE,
   cellHasClass,
   cellText,
@@ -187,6 +188,9 @@ describe('views and links', () => {
   it('loads from a subfolder URL with every file and the import worker', () =>
     scenario(env, 'subfolder', async ({ page }) => {
       expect(page.url().startsWith(BASE)).toBe(true)
+      // Fonts are bundled: they load from the app's own files, and any request to another site fails the scenario.
+      await page.evaluate(() => document.fonts.ready)
+      expect(await page.evaluate(() => [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family))).toContain('IBM Plex Sans')
       await clickButton(page, 'header button', 'Import CSV')
       await page.waitForSelector('dialog[open]')
       await clickButton(page, 'dialog button', '400 rows with errors')
@@ -211,4 +215,40 @@ describe('many rows', () => {
       },
       '?rows=20000',
     ))
+})
+
+describe('accessibility', () => {
+  it('has no axe violations in the main screens, in the dark and the light theme', () =>
+    scenario(env, 'accessibility', async ({ page }) => {
+      for (const scheme of ['dark', 'light'] as const) {
+        await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: scheme }])
+        const found: Record<string, string[]> = {}
+
+        found[`grid (${scheme})`] = await accessibilityProblems(page)
+
+        await clickButton(page, '.menu-root button', 'Views')
+        found[`views menu (${scheme})`] = await accessibilityProblems(page)
+        await clickButton(page, '.menu-root button', 'Views') // close it
+
+        await clickButton(page, '.menu-root button', 'Columns')
+        found[`columns menu (${scheme})`] = await accessibilityProblems(page)
+        await page.keyboard.press('Escape')
+
+        await dblclickCell(page, 'ORD-000001', 'rating')
+        await page.keyboard.type('9') // an invalid value shows the error tip
+        found[`editor with an error (${scheme})`] = await accessibilityProblems(page)
+        await page.keyboard.press('Escape')
+
+        await clickButton(page, 'header button', 'Import CSV')
+        await page.waitForSelector('dialog[open]')
+        await clickButton(page, 'dialog button', '400 rows with errors')
+        await page.waitForSelector('dialog .file-line')
+        found[`import report (${scheme})`] = await accessibilityProblems(page)
+        await page.keyboard.press('Escape')
+        await page.waitForFunction(() => !document.querySelector('dialog[open]'))
+
+        const problems = Object.entries(found).flatMap(([where, list]) => list.map((p) => `${where}: ${p}`))
+        expect(problems).toEqual([])
+      }
+    }))
 })

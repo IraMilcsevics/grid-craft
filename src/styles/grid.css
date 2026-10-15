@@ -153,7 +153,8 @@
   color: var(--line);
 }
 .muted-empty {
-  opacity: 0.7;
+  /* Italic, not faded: a lower opacity would drop the red below readable contrast. */
+  font-style: italic;
 }
 
 /* sticky header block: column headers + filter row */

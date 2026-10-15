@@ -15,7 +15,7 @@ export function FilterCell({ table, id }: { table: OrderTable; id: ColumnKey }) 
 
   if (meta.kind === 'enum') {
     return (
-      <div className="fcell">
+      <div className="fcell" role="gridcell">
         <select
           value={committed}
           className={committed ? 'active' : ''}
@@ -31,7 +31,7 @@ export function FilterCell({ table, id }: { table: OrderTable; id: ColumnKey }) 
     )
   }
   return (
-    <div className="fcell">
+    <div className="fcell" role="gridcell">
       <input
         value={text}
         className={error ? 'invalid' : committed ? 'active' : ''}

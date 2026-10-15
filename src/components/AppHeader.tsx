@@ -11,14 +11,14 @@ interface AppHeaderProps {
 export function AppHeader({ dataset, onOpen }: AppHeaderProps) {
   return (
     <header className="top">
-      <div className="logo">
+      <h1 className="logo">
         <i>
           {Array.from({ length: 9 }, (_, i) => (
             <b key={i} />
           ))}
         </i>
         GridCraft
-      </div>
+      </h1>
       <DataMenu {...dataset} />
       <div className="spacer" />
       <button className="btn" onClick={() => onOpen('benchmark')}>

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import type { Server } from 'node:http'
 import path from 'node:path'
 import puppeteer, { type Browser, type BrowserContext, type Page } from 'puppeteer-core'
@@ -61,8 +61,13 @@ export async function scenario(env: Env, name: string, body: (app: App) => Promi
     pages.push(page)
     await page.setViewport({ width: 1400, height: 860 })
     page.on('pageerror', (e) => problems.push(`script error: ${e instanceof Error ? e.message : String(e)}`))
-    page.on('requestfailed', (r) => !isFont(r.url()) && problems.push(`request failed: ${r.url()}`))
-    page.on('response', (r) => r.status() >= 400 && !isFont(r.url()) && problems.push(`${r.status()} ${r.url()}`))
+    page.on('requestfailed', (r) => problems.push(`request failed: ${r.url()}`))
+    page.on('response', (r) => r.status() >= 400 && problems.push(`${r.status()} ${r.url()}`))
+    // The app is meant to run entirely in the browser: nothing may be requested from another site.
+    page.on('request', (r) => {
+      const url = r.url()
+      if (!url.startsWith('data:') && !url.startsWith('blob:') && !url.startsWith(`http://localhost:${PORT}/`)) problems.push(`request to another site: ${url}`)
+    })
     await page.goto(BASE + q, { waitUntil: 'domcontentloaded' })
     await page.waitForSelector('.scroller .row', { timeout: 30_000 })
     return page
@@ -82,7 +87,6 @@ export async function scenario(env: Env, name: string, body: (app: App) => Promi
   }
 }
 
-const isFont = (url: string) => url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')
 
 // ---- small helpers that read the page the way a person would
 
@@ -128,3 +132,18 @@ export const selectedCell = (page: Page) =>
     const c = document.querySelector('.cell.sel') as HTMLElement | null
     return c ? `${(c.closest('.row') as HTMLElement).dataset.row}/${c.dataset.col}` : null
   })
+
+const AXE_SOURCE = readFileSync('node_modules/axe-core/axe.min.js', 'utf8')
+
+/**
+ * Runs the axe accessibility checker on the current state of the page and returns what it found,
+ * one readable line per problem. An empty list means the page passes.
+ */
+export async function accessibilityProblems(page: Page): Promise<string[]> {
+  await page.evaluate(AXE_SOURCE)
+  return page.evaluate(async () => {
+    const axe = (window as unknown as { axe: { run: (c: Document) => Promise<{ violations: { id: string; help: string; nodes: { target: unknown[] }[] }[] }> } }).axe
+    const result = await axe.run(document)
+    return result.violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length}), e.g. ${v.nodes[0]?.target.join(' ')}`)
+  })
+}

@@ -91,7 +91,7 @@ export function ViewsMenu({
       </div>
 
       {open && (
-        <div className="menu views" role="menu">
+        <div className="menu views" role="group" aria-label="Views">
           {active && modified && (
             <div className="menu-banner" role="group" aria-label="Unsaved changes">
               <p>
@@ -126,7 +126,6 @@ export function ViewsMenu({
 
           <button
             className="menu-item"
-            role="menuitem"
             onClick={() => {
               onReset()
               close()
@@ -141,7 +140,6 @@ export function ViewsMenu({
             <button
               key={p.id}
               className={`menu-item${p.id === activeId ? ' current' : ''}`}
-              role="menuitem"
               onClick={() => {
                 onApply(p.id, p.name, p.view)
                 close()
@@ -179,7 +177,6 @@ export function ViewsMenu({
               <div className="menu-row" key={v.id}>
                 <button
                   className={`menu-item${v.id === activeId ? ' current' : ''}`}
-                  role="menuitem"
                   onClick={() => {
                     onApply(v.id, v.name, v.view)
                     close()

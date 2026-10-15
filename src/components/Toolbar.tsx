@@ -47,7 +47,7 @@ function ColumnsMenu({ table }: { table: OrderTable }) {
         Columns{visible < all.length && <span className="count neutral">{visible}/{all.length}</span>}
       </button>
       {open && (
-        <div className="menu" role="menu">
+        <div className="menu" role="group" aria-label="Columns">
           <div className="menu-title">Show, hide and reorder</div>
           {all.map((c, i) => {
             const meta = COLUMN_BY_KEY[c.id as ColumnKey]
@@ -56,8 +56,7 @@ function ColumnsMenu({ table }: { table: OrderTable }) {
               <div className="menu-row" key={c.id}>
                 <button
                   className="menu-check"
-                  role="menuitemcheckbox"
-                  aria-checked={on}
+                  aria-pressed={on}
                   disabled={on && visible <= 1}
                   onClick={() => c.toggleVisibility(!on)}
                 >

@@ -60,17 +60,18 @@ which has no JavaScript compiler API. The few `eslint-disable` comments in the c
 
 ## Browser tests
 
-`e2e/` holds nine tests that drive the production build in headless Chrome the way a person would: fix a broken cell and undo it, refuse an invalid value,
-move around with the keyboard, edit and reload, discard edits, import a CSV with errors and reload, apply a view and open its link, and scroll 20,000 rows.
+`e2e/` holds ten tests that drive the production build in headless Chrome the way a person would: fix a broken cell and undo it, refuse an invalid value,
+move around with the keyboard, edit and reload, discard edits, import a CSV with errors and reload, apply a view and open its link, scroll 20,000 rows,
+and run the [axe](https://github.com/dequelabs/axe-core) accessibility checker on the grid, both menus, the editor and the import report in the dark and the light theme.
 Each test runs in a fresh browser profile, so saved data never leaks between tests, and the build is served from a subfolder (`/grid-craft/`) as GitHub Pages
-serves it, so a broken relative path fails here. A test fails if the app throws or any file request fails. In CI a failing test uploads a screenshot.
+serves it, so a broken relative path fails here. A test fails if the app throws, any file request fails, or the app asks another site for anything. In CI a failing test uploads a screenshot.
 
 One of them is a regression test for a real bug found this way: closing an invalid edit by clicking elsewhere used to pull focus back to the grid, so
 text typed into the search box after clicking it went nowhere. The test fails when the fix is taken out and passes with it.
 
 ## Where the data lives
 
-Everything stays in the browser; the app has no server.
+Everything stays in the browser; the app has no server and, with the fonts bundled, makes no request to any other site.
 
 | What | Where | How big |
 | --- | --- | --- |
