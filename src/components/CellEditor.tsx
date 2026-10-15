@@ -10,8 +10,9 @@ interface Props {
   row: Order
   /** Set when editing started by typing a character: it replaces the cell content. */
   initial?: string
-  onCommit: (value: Order[EditKey], move: Move) => void
-  onCancel: () => void
+  /** `fromBlur` is true when the editor lost focus because the user went elsewhere. */
+  onCommit: (value: Order[EditKey], move: Move, fromBlur: boolean) => void
+  onCancel: (fromBlur: boolean) => void
 }
 
 /** Inline editor. Validates as you type and refuses to commit an invalid value. */
@@ -25,19 +26,19 @@ export function CellEditor({ field, row, initial, onCommit, onCancel }: Props) {
   const value = parseInput(field, text)
   const error = validateCell(field, value)
 
-  const commit = (move: Move) => {
+  const commit = (move: Move, fromBlur = false) => {
     if (finished.current) return
     if (error) {
       setShaking(true)
       return
     }
     finished.current = true
-    onCommit(value as Order[EditKey], move)
+    onCommit(value as Order[EditKey], move, fromBlur)
   }
-  const cancel = () => {
+  const cancel = (fromBlur = false) => {
     if (finished.current) return
     finished.current = true
-    onCancel()
+    onCancel(fromBlur)
   }
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -54,7 +55,7 @@ export function CellEditor({ field, row, initial, onCommit, onCancel }: Props) {
     }
   }
   // Leaving the cell keeps a valid value and discards an invalid one.
-  const onBlur = () => (error ? cancel() : commit(null))
+  const onBlur = () => (error ? cancel(true) : commit(null, true))
 
   return (
     <div className={`editor${shaking ? ' shake' : ''}`} onAnimationEnd={() => setShaking(false)}>
@@ -67,7 +68,7 @@ export function CellEditor({ field, row, initial, onCommit, onCancel }: Props) {
           onBlur={onBlur}
           onChange={(e) => {
             finished.current = true
-            onCommit(e.target.value as Order[EditKey], null)
+            onCommit(e.target.value as Order[EditKey], null, false)
           }}
         >
           {!meta.options?.includes(text) && <option value="">Choose…</option>}

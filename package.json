@@ -31,7 +31,9 @@
     "typecheck": "tsc -b --noEmit",
     "bench:domain": "tsx scripts/bench-domain.ts",
     "bench:browser": "node scripts/bench-browser.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "contrast": "node scripts/check-contrast.mjs",
+    "lint": "oxlint --deny-warnings"
   },
   "dependencies": {
     "@tanstack/react-table": "^9.3.1",
@@ -44,6 +46,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "fake-indexeddb": "^6.2.5",
+    "oxlint": "^1.88.0",
     "puppeteer-core": "^25.14.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

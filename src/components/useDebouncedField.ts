@@ -7,11 +7,18 @@ import { useEffect, useRef, useState } from 'react'
  */
 export function useDebouncedField(committed: string, commit: (value: string) => void, delay = 140) {
   const [local, setLocal] = useState(committed)
+  // Follow the committed value when it changes from outside. Adjusting state while rendering, with a
+  // remembered previous value, avoids an extra render pass through an effect.
+  const [seen, setSeen] = useState(committed)
+  if (seen !== committed) {
+    setSeen(committed)
+    setLocal(committed)
+  }
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const commitRef = useRef(commit)
-  commitRef.current = commit
-
-  useEffect(() => setLocal(committed), [committed])
+  useEffect(() => {
+    commitRef.current = commit
+  })
   useEffect(() => () => clearTimeout(timer.current), [])
 
   const onChange = (value: string) => {

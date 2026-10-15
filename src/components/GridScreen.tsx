@@ -81,7 +81,7 @@ export function GridScreen({ session }: { session: Session }) {
       window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`)
     }, 250)
     return () => clearTimeout(timer)
-    // currentView is derived from viewSig
+    // Keyed on the view's canonical text, not the currentView object, which is new on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewSig])
 
@@ -220,7 +220,9 @@ export function GridScreen({ session }: { session: Session }) {
 
   // Save the edited cells shortly after each change, and straight away when the page is being hidden or closed.
   const latest = useRef({ state, baseId: base.id, persistOn })
-  latest.current = { state, baseId: base.id, persistOn }
+  useEffect(() => {
+    latest.current = { state, baseId: base.id, persistOn }
+  })
   const pendingSave = useRef(false)
   const flush = useCallback(async () => {
     const cur = latest.current
@@ -308,12 +310,14 @@ export function GridScreen({ session }: { session: Session }) {
   const listSig = JSON.stringify([columnFilters, globalFilter, sorting])
   useEffect(() => {
     table.setPageIndex(0)
+    // `table` is a stable instance; this must run only when the list changes (filters, search, sorting).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listSig])
   const lastPage = Math.max(0, table.getPageCount() - 1)
   useEffect(() => {
     // Functional form, so it composes with the reset above instead of overwriting it with a stale index.
     if (pagination.pageIndex > lastPage) table.setPageIndex((i) => Math.min(i, lastPage))
+    // `table` is a stable instance; only the page index and the number of pages matter here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.pageIndex, lastPage])
 

@@ -44,6 +44,8 @@ npm run dev          # http://localhost:5173
 | `npm run dev` | Vite dev server |
 | `npm test` | Vitest for the data layer (validation, generator, CSV, filters, editing history, views) |
 | `npm run typecheck` | `tsc -b`, strict mode |
+| `npm run lint` | [Oxlint](https://oxc.rs/docs/guide/usage/linter): correctness rules, the rules of hooks and `exhaustive-deps`, zero warnings allowed |
+| `npm run contrast` | Checks every text and surface color pair in both themes against WCAG AA (4.5:1 for text, 3:1 for dots and borders) |
 | `npm run build` / `npm run preview` | Production build and local preview |
 | `npm run bench:domain` | Headless benchmark of the data layer in Node |
 | `npm run bench:browser` | The in-app benchmark in headless Chrome against the production build (run `npm run build` first) |
@@ -51,6 +53,9 @@ npm run dev          # http://localhost:5173
 
 Two URL flags are for testing: `?rows=100000` loads a bigger demo dataset (100 to 250,000) and `?virtual=off` draws
 every row, to show what virtualization saves. They are kept when the grid updates the address bar.
+
+Lint and contrast run in CI together with the typecheck, tests and build. Oxlint is used because typescript-eslint cannot yet run on TypeScript 7,
+which has no JavaScript compiler API. The few `eslint-disable` comments in the code each say why an effect is deliberately keyed on less than all of its inputs.
 
 ## Where the data lives
 

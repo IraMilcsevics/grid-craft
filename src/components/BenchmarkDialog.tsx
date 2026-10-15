@@ -46,8 +46,12 @@ export function BenchmarkDialog({ table, rowCount, firstRowId, virtualized, getR
   const [progress, setProgress] = useState<{ done: number; total: number; label: string } | null>(null)
   const [copied, setCopied] = useState(false)
   const signal = useRef({ aborted: false })
-  const ctx = useRef({ table, getRows, firstRowId, edit, undo, getView, setView, scroller: () => document.querySelector<HTMLElement>('.scroller') })
-  ctx.current = { table, getRows, firstRowId, edit, undo, getView, setView, scroller: () => document.querySelector<HTMLElement>('.scroller') }
+  // A run lasts many renders, so it reads the latest props through a ref that is refreshed after each render.
+  const current = { table, getRows, firstRowId, edit, undo, getView, setView, scroller: () => document.querySelector<HTMLElement>('.scroller') }
+  const ctx = useRef(current)
+  useEffect(() => {
+    ctx.current = current
+  })
 
   // Closing the dialog stops a run; the runner puts the original view back.
   useEffect(() => {

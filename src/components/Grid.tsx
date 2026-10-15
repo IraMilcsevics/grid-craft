@@ -108,12 +108,13 @@ export function Grid({ table, dirty, onEdit, onUndo, onRedo, notify, onRendered,
   }, [])
 
   // A hidden column cannot keep the selection or an open editor.
+  const leafIds = leaf.map((c) => c.id).join()
   useEffect(() => {
-    if (sel && !leaf.some((c) => c.id === sel.col)) {
+    if (sel && !leafIds.split(',').includes(sel.col)) {
       setSel(null)
       setEditing(null)
     }
-  })
+  }, [leafIds, sel])
 
   const reorder = (activeId: string, overId: string) => {
     if (activeId === overId) return
@@ -180,6 +181,8 @@ export function Grid({ table, dirty, onEdit, onUndo, onRedo, notify, onRendered,
       else if (right > scroller.scrollLeft + scroller.clientWidth) scroller.scrollLeft = right - scroller.clientWidth
     })
     return () => cancelAnimationFrame(frame)
+    // Deliberately keyed on the selection only: selIndex and the virtualizer change on every data update,
+    // and the grid must not jump back to the selected cell each time a value is edited.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selId, selCol])
 
@@ -207,21 +210,22 @@ export function Grid({ table, dirty, onEdit, onUndo, onRedo, notify, onRendered,
     setEditing({ id: rows[selIndex]!.id, col: sel.col, initial: meta.kind === 'enum' ? undefined : initial })
   }
 
-  const finishEdit = (value: Order[EditKey], move: Move) => {
+  // When the editor closed because the user clicked somewhere else, focus must stay where they put it.
+  const finishEdit = (value: Order[EditKey], direction: Move, fromBlur: boolean) => {
     if (!editing) return
     const { id, col } = editing
     setEditing(null)
     onEdit(id, col as EditKey, value)
-    if (move) {
-      const dr = move === 'down' ? 1 : move === 'up' ? -1 : 0
-      const dc = move === 'right' ? 1 : move === 'left' ? -1 : 0
+    if (direction) {
+      const dr = direction === 'down' ? 1 : direction === 'up' ? -1 : 0
+      const dc = direction === 'right' ? 1 : direction === 'left' ? -1 : 0
       select(selIndex + dr, colIndex + dc)
     }
-    focusGrid()
+    if (!fromBlur) focusGrid()
   }
-  const cancelEdit = () => {
+  const cancelEdit = (fromBlur: boolean) => {
     setEditing(null)
-    focusGrid()
+    if (!fromBlur) focusGrid()
   }
 
   const applyHistory = (edit: CellEdit | undefined) => {
@@ -234,22 +238,39 @@ export function Grid({ table, dirty, onEdit, onUndo, onRedo, notify, onRendered,
     const k = e.key
     const page = Math.max(1, Math.floor((scrollRef.current?.clientHeight ?? 400) / ROW_H) - 3)
 
-    if (mod && k.toLowerCase() === 'z') {
+    const handled = (action: () => void) => {
       e.preventDefault()
-      applyHistory(e.shiftKey ? onRedo() : onUndo())
-    } else if (mod && k.toLowerCase() === 'y') {
-      e.preventDefault()
-      applyHistory(onRedo())
-    } else if (k === 'ArrowDown') (e.preventDefault(), move(1, 0))
-    else if (k === 'ArrowUp') (e.preventDefault(), move(-1, 0))
-    else if (k === 'ArrowRight') (e.preventDefault(), move(0, 1))
-    else if (k === 'ArrowLeft') (e.preventDefault(), move(0, -1))
-    else if (k === 'PageDown') (e.preventDefault(), move(page, 0))
-    else if (k === 'PageUp') (e.preventDefault(), move(-page, 0))
-    else if (k === 'Home') (e.preventDefault(), mod ? select(0, Math.max(colIndex, 0)) : select(Math.max(selIndex, 0), 0))
-    else if (k === 'End') (e.preventDefault(), mod ? select(rows.length - 1, Math.max(colIndex, 0)) : select(Math.max(selIndex, 0), leaf.length - 1))
-    else if (sel && (k === 'Enter' || k === 'F2')) (e.preventDefault(), startEdit())
-    else if (sel && k.length === 1 && !mod && !e.altKey) (e.preventDefault(), startEdit(k))
+      action()
+    }
+
+    if (mod && (k.toLowerCase() === 'z' || k.toLowerCase() === 'y')) {
+      const redo = k.toLowerCase() === 'y' || e.shiftKey
+      return handled(() => applyHistory(redo ? onRedo() : onUndo()))
+    }
+    switch (k) {
+      case 'ArrowDown':
+        return handled(() => move(1, 0))
+      case 'ArrowUp':
+        return handled(() => move(-1, 0))
+      case 'ArrowRight':
+        return handled(() => move(0, 1))
+      case 'ArrowLeft':
+        return handled(() => move(0, -1))
+      case 'PageDown':
+        return handled(() => move(page, 0))
+      case 'PageUp':
+        return handled(() => move(-page, 0))
+      case 'Home':
+        return handled(() => (mod ? select(0, Math.max(colIndex, 0)) : select(Math.max(selIndex, 0), 0)))
+      case 'End':
+        return handled(() => (mod ? select(rows.length - 1, Math.max(colIndex, 0)) : select(Math.max(selIndex, 0), leaf.length - 1)))
+      case 'Enter':
+      case 'F2':
+        if (sel) return handled(() => startEdit())
+        return
+    }
+    // Typing a character starts editing with that character.
+    if (sel && k.length === 1 && !mod && !e.altKey) handled(() => startEdit(k))
   }
 
   const cellFromEvent = (e: React.MouseEvent): Sel | null => {
