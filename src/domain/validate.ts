@@ -2,6 +2,11 @@ import { COLUMN_BY_KEY, type ColumnKey, type Order } from './schema'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// The numeric rules are shared with the totals row, which checks every row and cannot afford the message strings.
+export const isQty = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 0
+export const isPrice = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0
+export const isRating = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 5
+
 /** Returns a user-facing message, or null when the value is valid. */
 export function validateCell(key: ColumnKey, v: unknown): string | null {
   switch (key) {
@@ -16,16 +21,16 @@ export function validateCell(key: ColumnKey, v: unknown): string | null {
       return typeof v === 'string' && opts.includes(v) ? null : `Pick one of: ${opts.join(', ')}`
     }
     case 'qty':
-      return typeof v === 'number' && Number.isInteger(v) && v >= 0 ? null : 'Quantity must be a whole number, 0 or more'
+      return isQty(v) ? null : 'Quantity must be a whole number, 0 or more'
     case 'price':
-      return typeof v === 'number' && Number.isFinite(v) && v > 0 ? null : 'Unit price must be a number above 0'
+      return isPrice(v) ? null : 'Unit price must be a number above 0'
     case 'created': {
       if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return 'Use the format YYYY-MM-DD'
       const d = new Date(`${v}T00:00:00Z`)
       return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v ? null : 'That date does not exist'
     }
     case 'rating':
-      return typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 5 ? null : 'Rating must be a whole number from 1 to 5'
+      return isRating(v) ? null : 'Rating must be a whole number from 1 to 5'
     default:
       return null
   }
@@ -48,11 +53,16 @@ export function orderTotal(o: Pick<Order, 'qty' | 'price'>): number | null {
   return Number.isFinite(t) ? Math.round(t * 100) / 100 : null
 }
 
+const EDITABLE_KEYS = Object.values(COLUMN_BY_KEY)
+  .filter((c) => c.editable)
+  .map((c) => c.key as keyof Order)
+
 /** Number of invalid editable cells in a row. */
 export function countErrors(o: Order): number {
   let n = 0
-  for (const col of Object.values(COLUMN_BY_KEY)) {
-    if (col.editable && validateCell(col.key, o[col.key as keyof Order])) n++
+  for (let i = 0; i < EDITABLE_KEYS.length; i++) {
+    const key = EDITABLE_KEYS[i] as keyof Order
+    if (validateCell(key, o[key])) n++
   }
   return n
 }

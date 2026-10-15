@@ -4,7 +4,6 @@ import {
   columnResizingFeature,
   columnSizingFeature,
   columnVisibilityFeature,
-  constructAggregationFn,
   constructFilterFn,
   createPaginatedRowModel,
   createColumnHelper,
@@ -12,7 +11,6 @@ import {
   createSortedRowModel,
   filterFn_includesString,
   globalFilteringFeature,
-  rowAggregationFeature,
   rowPaginationFeature,
   rowSortingFeature,
   sortFn_basic,
@@ -40,7 +38,6 @@ export const features = tableFeatures({
   filterFns: { includesString: filterFn_includesString },
   rowPaginationFeature,
   paginatedRowModel: createPaginatedRowModel(),
-  rowAggregationFeature,
 })
 
 const helper = createColumnHelper<typeof features, Order>()
@@ -65,35 +62,6 @@ const errorsOnly = constructFilterFn({
   autoRemove: (on: unknown) => !on,
 })
 
-/** What the totals row needs from one column. Invalid cells are left out of sums and averages and counted separately. */
-export interface ColumnTotals {
-  rows: number
-  valid: number
-  sum: number
-  skipped: number
-}
-
-const totalsFn = constructAggregationFn({
-  aggregate: (ctx): ColumnTotals => {
-    let valid = 0
-    let sum = 0
-    for (const row of ctx.rows) {
-      const o = row.original as Order
-      // A total only counts when both of its inputs are valid, so a negative quantity never leaks into the sum.
-      const ok =
-        ctx.columnId === 'total'
-          ? validateCell('qty', o.qty) === null && validateCell('price', o.price) === null
-          : validateCell(ctx.columnId as ColumnKey, o[ctx.columnId as keyof Order]) === null
-      const v = ctx.getValue(row)
-      if (ok) {
-        valid++
-        if (typeof v === 'number') sum += v
-      }
-    }
-    return { rows: ctx.rows.length, valid, sum, skipped: ctx.rows.length - valid }
-  },
-})
-
 /** Empty text and unparseable numbers become undefined so those rows sort last instead of first. */
 const str = (v: string) => (v === '' ? undefined : v)
 const num = (v: unknown) => (typeof v === 'number' ? v : undefined)
@@ -101,16 +69,16 @@ const w = (k: ColumnKey) => COLUMN_BY_KEY[k].width
 
 export const columns = helper.columns([
   helper.accessor((r) => str(r.id), { id: 'id', header: 'Order', size: w('id'), sortFn: 'text', filterFn: FILTERS.text }),
-  helper.accessor((r) => str(r.customer), { id: 'customer', header: 'Customer', size: w('customer'), sortFn: 'text', sortUndefined: 'last', filterFn: FILTERS.text, aggregationFn: totalsFn }),
+  helper.accessor((r) => str(r.customer), { id: 'customer', header: 'Customer', size: w('customer'), sortFn: 'text', sortUndefined: 'last', filterFn: FILTERS.text }),
   helper.accessor((r) => str(r.email), { id: 'email', header: 'Email', size: w('email'), sortFn: 'text', sortUndefined: 'last', filterFn: FILTERS.text }),
   helper.accessor((r) => str(r.country), { id: 'country', header: 'Country', size: w('country'), sortFn: 'text', sortUndefined: 'last', filterFn: FILTERS.enum }),
   helper.accessor((r) => str(r.status), { id: 'status', header: 'Status', size: w('status'), sortFn: 'text', sortUndefined: 'last', filterFn: FILTERS.enum }),
   helper.accessor((r) => str(r.category), { id: 'category', header: 'Category', size: w('category'), sortFn: 'text', sortUndefined: 'last', filterFn: FILTERS.enum }),
-  helper.accessor((r) => num(r.qty), { id: 'qty', header: 'Qty', size: w('qty'), sortFn: 'basic', sortUndefined: 'last', filterFn: FILTERS.number, aggregationFn: totalsFn }),
-  helper.accessor((r) => num(r.price), { id: 'price', header: 'Unit price', size: w('price'), sortFn: 'basic', sortUndefined: 'last', filterFn: FILTERS.number, aggregationFn: totalsFn }),
-  helper.accessor((r) => orderTotal(r) ?? undefined, { id: 'total', header: 'Total', size: w('total'), sortFn: 'basic', sortUndefined: 'last', filterFn: FILTERS.number, aggregationFn: totalsFn }),
+  helper.accessor((r) => num(r.qty), { id: 'qty', header: 'Qty', size: w('qty'), sortFn: 'basic', sortUndefined: 'last', filterFn: FILTERS.number }),
+  helper.accessor((r) => num(r.price), { id: 'price', header: 'Unit price', size: w('price'), sortFn: 'basic', sortUndefined: 'last', filterFn: FILTERS.number }),
+  helper.accessor((r) => orderTotal(r) ?? undefined, { id: 'total', header: 'Total', size: w('total'), sortFn: 'basic', sortUndefined: 'last', filterFn: FILTERS.number }),
   helper.accessor((r) => str(r.created), { id: 'created', header: 'Created', size: w('created'), sortFn: 'text', sortUndefined: 'last', filterFn: FILTERS.date }),
-  helper.accessor((r) => num(r.rating), { id: 'rating', header: 'Rating', size: w('rating'), sortFn: 'basic', sortUndefined: 'last', filterFn: FILTERS.number, aggregationFn: totalsFn }),
+  helper.accessor((r) => num(r.rating), { id: 'rating', header: 'Rating', size: w('rating'), sortFn: 'basic', sortUndefined: 'last', filterFn: FILTERS.number }),
   helper.accessor((r) => countErrors(r), { id: ERRORS_COLUMN, header: 'Errors', size: 0, enableSorting: false, enableHiding: false, enableResizing: false, filterFn: errorsOnly }),
 ])
 

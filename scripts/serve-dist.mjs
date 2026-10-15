@@ -8,7 +8,7 @@ import path from 'node:path'
 
 const port = Number(process.argv[2] ?? 4175)
 const prefix = (process.argv[3] ?? '/').replace(/\/?$/, '/')
-const root = path.resolve('dist')
+const root = path.resolve(process.env.DIST ?? 'dist')
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png' }
 
 createServer((req, res) => {

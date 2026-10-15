@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { dirtyKey, initOrders, ordersReducer } from './editing'
+import { countErrors } from './validate'
 import { generateOrders } from './generate'
 
 const fresh = () => initOrders(generateOrders(20, 3))
@@ -58,5 +59,39 @@ describe('ordersReducer', () => {
     s = ordersReducer(s, { type: 'edit', id, key: 'qty', value: 4 })
     s = ordersReducer(s, { type: 'undo' })
     expect(s.rows[0]!.qty).toBe('n/a')
+  })
+})
+
+describe('errorRows', () => {
+  const recount = (rows: ReturnType<typeof generateOrders>) => rows.filter((r) => countErrors(r) > 0).length
+
+  it('starts at the number of rows with errors', () => {
+    const rows = generateOrders(500, 4)
+    expect(initOrders(rows).errorRows).toBe(recount(rows))
+  })
+
+  it('follows edits, undo and redo without recounting every row', () => {
+    const rows = generateOrders(500, 4)
+    let s = initOrders(rows)
+    const bad = rows.find((r) => countErrors(r) > 0)!
+    const good = rows.find((r) => countErrors(r) === 0)!
+    const start = s.errorRows
+
+    s = ordersReducer(s, { type: 'edit', id: good.id, key: 'qty', value: -5 })
+    expect(s.errorRows).toBe(start + 1)
+    s = ordersReducer(s, { type: 'edit', id: good.id, key: 'qty', value: 'n/a' })
+    expect(s.errorRows).toBe(start + 1)
+    s = ordersReducer(s, { type: 'edit', id: bad.id, key: 'email', value: 'fixed@example.com' })
+    const fixedOne = countErrors(s.rows[s.index.get(bad.id)!]!) === 0
+    expect(s.errorRows).toBe(start + 1 - (fixedOne ? 1 : 0))
+    expect(s.errorRows).toBe(recount(s.rows))
+
+    s = ordersReducer(s, { type: 'undo' })
+    expect(s.errorRows).toBe(recount(s.rows))
+    s = ordersReducer(s, { type: 'undo' })
+    s = ordersReducer(s, { type: 'undo' })
+    expect(s.errorRows).toBe(start)
+    s = ordersReducer(s, { type: 'redo' })
+    expect(s.errorRows).toBe(recount(s.rows))
   })
 })

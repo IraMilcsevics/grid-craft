@@ -29,7 +29,7 @@ The clickable design reference is [prototype/gridcraft-prototype.html](prototype
 - **CSV:** import in a Web Worker with a validation report, export of the current view or of everything.
 - **Your data stays:** edits and imported files are saved in the browser (IndexedDB) and are back after a reload. Nothing is uploaded.
 - **Views:** save, update, rename and delete views in `localStorage`, plus three built-in ones. The same state is in the URL, so a link restores the screen.
-- **Totals row:** count, sum and average, calculated with TanStack's aggregation over all filtered rows. Invalid cells are left out and counted.
+- **Totals row:** count, sum and average over all filtered rows, in one pass (`src/domain/totals.ts`). Invalid cells are left out and counted.
 - **Performance panel and benchmark:** live timings in the app, and a benchmark you can run from the header button.
 
 ## Run it
@@ -94,22 +94,24 @@ after a discarded warm-up. Full output is in [bench-results/browser.md](bench-re
 
 | Operation | 1,000 rows | 10,000 rows | 100,000 rows |
 | --- | ---: | ---: | ---: |
-| Baseline: no change, wait for paint | 29 ms | 30 ms | 29 ms |
-| Global search "an" | 29 ms | 41 ms | 294 ms |
-| Column filter: Qty > 5 | 29 ms | 37 ms | 185 ms |
-| Search + Status + Total filters | 29 ms | 41 ms | 157 ms |
-| Errors only | 30 ms | 30 ms | 112 ms |
-| Sort by Customer (text) | 34 ms | 86 ms | 693 ms |
-| Sort by Total (computed) | 30 ms | 86 ms | 811 ms |
-| Sort by Country, then Created | 30 ms | 111 ms | 1,066 ms |
-| Edit one cell (data sorted by Total) | 29 ms | 78 ms | 1,182 ms |
-| Scroll top to bottom in 2 s | 50 fps | 41 fps | 33 fps |
-| Build CSV for every row | 1.2 ms | 13 ms | 115 ms |
-| Import CSV (worker, parse and validate) | 21 ms | 83 ms | 767 ms |
+| Baseline: no change, wait for paint | 29 ms | 30 ms | 30 ms |
+| Global search "an" | 30 ms | 75 ms | 157 ms |
+| Column filter: Qty > 5 | 41 ms | 43 ms | 112 ms |
+| Search + Status + Total filters | 30 ms | 60 ms | 160 ms |
+| Errors only | 44 ms | 41 ms | 91 ms |
+| Sort by Customer (text) | 36 ms | 76 ms | 356 ms |
+| Sort by Total (computed) | 30 ms | 63 ms | 473 ms |
+| Sort by Country, then Created | 45 ms | 106 ms | 700 ms |
+| Edit one cell (data sorted by Total) | 30 ms | 39 ms | 486 ms |
+| Scroll top to bottom in 2 s | 50 fps | 44 fps | 36 fps |
+| Build CSV for every row | 1.2 ms | 11 ms | 116 ms |
+| Import CSV (worker, parse and validate) | 19 ms | 77 ms | 737 ms |
 
-The baseline is the cost of waiting for two frames, so subtract it from the rows above it. It moves between runs (about 10 to 30 ms on this machine), so compare rows within one run, not across runs. Scrolling at 100,000 rows covers the
-whole list in two seconds, so it is a harder test than at 1,000 rows. At 10,000 rows, which is the demo size, a filter adds 7 to 11 ms on top of
-the baseline, a single-column sort about 55 ms and a two-column sort about 80 ms.
+The baseline is the cost of waiting for two frames, so subtract it from the rows above it. It moves between runs (about 10 to 30 ms on this machine),
+and single results at 10,000 rows vary by roughly 30 ms (the global search took 41 ms in one run and 75 ms in another), so compare rows within one run
+and read small differences as noise. Scrolling at 100,000 rows covers the whole list in two seconds, so it is a harder test than at 1,000 rows.
+At 10,000 rows, which is the demo size, a filter adds 10 to 45 ms on top of the baseline, a single-column sort 30 to 45 ms, a two-column sort about 75 ms,
+and editing a cell about 10 ms.
 
 ### What virtualization buys
 
@@ -117,14 +119,14 @@ Same app, same data, `?virtual=off` against the default:
 
 | Rows | Virtualization | Grid painted | DOM nodes | Scroll |
 | ---: | --- | ---: | ---: | ---: |
-| 1,000 | on | 415 ms | 679 | 50 fps, p95 frame 20 ms |
-| 10,000 | on | 369 ms | 679 | 41 fps, p95 frame 40 ms |
-| 100,000 | on | 1,195 ms | 679 | 33 fps, p95 frame 40 ms |
-| 1,000 | off | 1,072 ms | 16,195 | 21 fps, p95 frame 60 ms |
-| 10,000 | off | 9,934 ms | 160,084 | 3 fps, p95 frame 660 ms |
+| 1,000 | on | 402 ms | 686 | 50 fps, p95 frame 20 ms |
+| 10,000 | on | 328 ms | 686 | 44 fps, p95 frame 40 ms |
+| 100,000 | on | 874 ms | 686 | 36 fps, p95 frame 40 ms |
+| 1,000 | off | 1,034 ms | 16,202 | 22 fps, p95 frame 60 ms |
+| 10,000 | off | 7,547 ms | 160,091 | 3 fps, p95 frame 640 ms |
 
-Times are from navigation start, so they include loading the app. With virtualization the DOM stays at 679 nodes at every size. Without
-it, 10,000 rows take about 10 seconds to appear and scrolling is unusable. The 100,000-row case without virtualization was not run.
+Times are from navigation start, so they include loading the app. With virtualization the DOM stays at 686 nodes at every size. Without
+it, 10,000 rows take about 8 seconds to appear and scrolling is unusable. The 100,000-row case without virtualization was not run.
 
 ### Data layer on its own
 
@@ -132,17 +134,30 @@ it, 10,000 rows take about 10 seconds to appear and scrolling is unusable. The 1
 
 | Operation | 1,000 rows | 10,000 rows | 100,000 rows |
 | --- | ---: | ---: | ---: |
-| Generate rows | 3.0 ms | 20 ms | 225 ms |
-| Validate every cell | 3.1 ms | 31 ms | 298 ms |
-| Build CSV | 1.9 ms | 21 ms | 231 ms |
-| Parse CSV text | 1.5 ms | 22 ms | 236 ms |
-| Parse and import with validation report | 7.1 ms | 69 ms | 692 ms |
+| Generate rows | 3.1 ms | 20 ms | 215 ms |
+| Validate every cell | 2.5 ms | 23 ms | 230 ms |
+| Build CSV | 1.9 ms | 20 ms | 214 ms |
+| Parse CSV text | 1.3 ms | 22 ms | 232 ms |
+| Parse and import with validation report | 6.7 ms | 59 ms | 642 ms |
+
+### Case study: editing a cell at 100,000 rows
+
+The first benchmark showed an edit taking 1.2 s at 100,000 rows, so it was profiled in Chrome instead of guessed at. The row model was not the main cost.
+Two passes of my own over every row ran after each edit: recounting the rows with errors (validating all 1.1 million cells), and the totals row, which went
+through TanStack's general aggregation and spent most of its time preparing rows rather than adding. The fixes:
+
+- The count of rows with errors is kept up to date edit by edit: only the changed row is checked, before and after.
+- The totals row is a single loop that shares its validity rules with the cell validator, and a test compares it with a cell-by-cell calculation.
+
+An edit at 100,000 rows fell from 1.18 s to 0.49 s when the data is sorted, and from about 670 ms to about 160 ms when it is not (profiler runs; the benchmark
+table above has the sorted case). The same change took the totals recalculation out of every filter and sort, which is why those rows are faster than in
+the first benchmark. What is left is TanStack re-sorting 100,000 rows.
 
 ### Known limits
 
-- **Editing at 100,000 rows takes about 1.2 s.** An edit creates a new data array and TanStack rebuilds the whole row model, including the sort. It is fine up to
-  tens of thousands of rows (78 ms at 10,000) but it does not scale. The fix would be to patch the one affected row in the model instead of rebuilding it.
-- **Sorting 100,000 rows takes 0.7 to 1.1 s.** It runs on the main thread. Moving it to a worker would keep typing and scrolling responsive during it.
+- **Editing at 100,000 rows takes about 0.5 s when the list is sorted.** Every edit hands TanStack a new data array and it sorts all rows again; unsorted it is about 0.16 s.
+  Patching the one affected row in the sorted list instead of re-sorting would remove most of the rest. At 10,000 rows an edit takes about 40 ms.
+- **Sorting 100,000 rows takes 0.35 to 0.7 s.** It runs on the main thread. Moving it to a worker would keep typing and scrolling responsive during it.
 - **Data lives in one browser.** Edits and imports are stored in IndexedDB on this device only: there is no sync between devices or browsers, and clearing site data removes them.
   Two tabs of the app share the same store and the last one to save wins. Undo history is not kept across a reload, only the edited cells and their markers.
 - The scroll numbers come from software rendering. Expect smoother scrolling on a machine with a GPU.
@@ -173,8 +188,8 @@ bench-results/   Latest benchmark output
 prototype/       Static design prototype
 ```
 
-Choices worth knowing about: TanStack Table owns row logic (filtering, sorting, sizing, visibility, order, paging, aggregation) and everything the user
-sees is built here. The column registry only enables the features the grid uses. The data layer has no React in it, which is why
+Choices worth knowing about: TanStack Table owns row logic (filtering, sorting, sizing, visibility, order, paging) and everything the user
+sees is built here. The column registry only enables the features the grid uses. The totals row is not one of them: a plain loop beat the general aggregation by a wide margin where it matters. The data layer has no React in it, which is why
 it can be tested and benchmarked on its own.
 
 ## License

@@ -1,4 +1,5 @@
 import type { ColumnKey, Order } from './schema'
+import { countErrors } from './validate'
 
 export type EditKey = Exclude<keyof Order, 'id'>
 
@@ -19,6 +20,8 @@ export interface OrdersState {
   future: CellEdit[]
   /** Cells changed since load, keyed by `dirtyKey`. */
   dirty: Record<string, true>
+  /** Rows with at least one invalid cell. Kept up to date edit by edit, so it never needs a pass over every row. */
+  errorRows: number
 }
 
 export type OrdersAction =
@@ -33,15 +36,21 @@ const HISTORY_LIMIT = 500
 export const dirtyKey = (id: string, key: ColumnKey) => `${id}:${key}`
 
 export function initOrders(rows: Order[], dirty: Record<string, true> = {}): OrdersState {
-  return { rows, index: new Map(rows.map((r, i) => [r.id, i])), past: [], future: [], dirty }
+  let errorRows = 0
+  for (let i = 0; i < rows.length; i++) if (countErrors(rows[i] as Order) > 0) errorRows++
+  return { rows, index: new Map(rows.map((r, i) => [r.id, i])), past: [], future: [], dirty, errorRows }
 }
 
-function setCell(rows: Order[], index: Map<string, number>, id: string, key: EditKey, value: Order[EditKey]) {
-  const i = index.get(id)
-  if (i === undefined) return rows
-  const next = rows.slice()
-  next[i] = { ...(rows[i] as Order), [key]: value }
-  return next
+/** Changes one cell. Also reports how the number of rows with errors changed, so the caller does not have to recount. */
+function setCell(state: OrdersState, id: string, key: EditKey, value: Order[EditKey]) {
+  const i = state.index.get(id)
+  if (i === undefined) return { rows: state.rows, errorRows: state.errorRows }
+  const before = state.rows[i] as Order
+  const after = { ...before, [key]: value }
+  const rows = state.rows.slice()
+  rows[i] = after
+  const delta = (countErrors(after) > 0 ? 1 : 0) - (countErrors(before) > 0 ? 1 : 0)
+  return { rows, errorRows: state.errorRows + delta }
 }
 
 export function ordersReducer(state: OrdersState, action: OrdersAction): OrdersState {
@@ -58,7 +67,7 @@ export function ordersReducer(state: OrdersState, action: OrdersAction): OrdersS
       const edit: CellEdit = { id: action.id, key: action.key, before, after: action.value, wasDirty: !!state.dirty[dk] }
       return {
         ...state,
-        rows: setCell(state.rows, state.index, action.id, action.key, action.value),
+        ...setCell(state, action.id, action.key, action.value),
         past: [...state.past.slice(-(HISTORY_LIMIT - 1)), edit],
         future: [],
         dirty: { ...state.dirty, [dk]: true },
@@ -72,7 +81,7 @@ export function ordersReducer(state: OrdersState, action: OrdersAction): OrdersS
       if (!edit.wasDirty) delete dirty[dirtyKey(edit.id, edit.key)]
       return {
         ...state,
-        rows: setCell(state.rows, state.index, edit.id, edit.key, edit.before),
+        ...setCell(state, edit.id, edit.key, edit.before),
         past: state.past.slice(0, -1),
         future: [...state.future, edit],
         dirty,
@@ -84,7 +93,7 @@ export function ordersReducer(state: OrdersState, action: OrdersAction): OrdersS
       if (!edit) return state
       return {
         ...state,
-        rows: setCell(state.rows, state.index, edit.id, edit.key, edit.after),
+        ...setCell(state, edit.id, edit.key, edit.after),
         past: [...state.past, edit],
         future: state.future.slice(0, -1),
         dirty: { ...state.dirty, [dirtyKey(edit.id, edit.key)]: true },

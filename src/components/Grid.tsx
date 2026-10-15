@@ -3,8 +3,9 @@ import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import { dirtyKey, type CellEdit, type EditKey } from '../domain/editing'
 import { filterError } from '../domain/filter'
 import { COLUMN_BY_KEY, type ColumnKey, type Order } from '../domain/schema'
+import type { ColumnTotals } from '../domain/totals'
 import { CellEditor, type Move } from './CellEditor'
-import { ERRORS_COLUMN, cellProblem, renderValue, type ColumnTotals, type OrderTable } from './columns'
+import { ERRORS_COLUMN, cellProblem, renderValue, type OrderTable } from './columns'
 import { useDebouncedField } from './useDebouncedField'
 
 const ROW_H = 34

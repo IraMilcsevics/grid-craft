@@ -6,6 +6,7 @@ import { DEFAULT_DEMO_ROWS, DEMO_NAME, type Session } from '../lib/bootSession'
 import { COLUMN_BY_KEY, type ColumnKey, type Order } from '../domain/schema'
 import { PRESETS } from '../domain/presets'
 import { countErrors } from '../domain/validate'
+import { computeTotals } from '../domain/totals'
 import { canonicalView, fromSearchParams, mergeSearchParams, toSearchParams, viewsEqual, emptyView, type RowMode, type ViewState } from '../domain/view'
 import { loadSavedViews, persistSavedViews, removeView, upsertView, type SavedView } from '../domain/viewStore'
 import { afterPaint, perf } from '../perf/perfStore'
@@ -18,10 +19,9 @@ import { PerfPanel } from './PerfPanel'
 import { ViewsMenu } from './ViewsMenu'
 import { applyView, viewFromTable } from './tableView'
 import { Chips, Pager, Toolbar } from './Toolbar'
-import { ERRORS_COLUMN, useOrderTable, type ColumnTotals } from './columns'
+import { ERRORS_COLUMN, useOrderTable } from './columns'
 
 const fmt = (n: number) => n.toLocaleString('en-US')
-const TOTAL_COLUMNS: ColumnKey[] = ['customer', 'qty', 'price', 'total', 'rating']
 const ms = (n: number) => (n < 10 ? n.toFixed(1) : Math.round(n).toString())
 
 export function GridScreen({ session }: { session: Session }) {
@@ -32,7 +32,7 @@ export function GridScreen({ session }: { session: Session }) {
   const [initialView] = useState(() => fromSearchParams(new URLSearchParams(window.location.search)))
   const table = useOrderTable(data, initialView)
   const [mode, setMode] = useState<RowMode>(initialView.mode)
-  const badRows = useMemo(() => data.filter((r) => countErrors(r) > 0).length, [data])
+  const badRows = state.errorRows
   const [domRows, setDomRows] = useState(0)
   const dirtyCount = Object.keys(state.dirty).length
 
@@ -317,12 +317,7 @@ export function GridScreen({ session }: { session: Session }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.pageIndex, lastPage])
 
-  const totals = useMemo(() => {
-    const out: Partial<Record<ColumnKey, ColumnTotals>> = {}
-    for (const key of TOTAL_COLUMNS) out[key] = table.getColumn(key)?.getAggregationValue<ColumnTotals>({ rows: allRows })
-    return out
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allRows])
+  const totals = useMemo(() => computeTotals(viewRows), [viewRows])
   const totalsHint = `Totals cover all ${fmt(allRows.length)} filtered rows${mode === 'paged' ? ', not just this page' : ''}`
   const scrollKey = JSON.stringify([listSig, mode, pagination.pageIndex, pagination.pageSize])
 
