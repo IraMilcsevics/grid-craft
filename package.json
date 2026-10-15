@@ -2,6 +2,25 @@
   "name": "gridcraft",
   "private": true,
   "version": "0.1.0",
+  "description": "An advanced data grid with virtualized rows, validation, inline editing and CSV import, built with React and TanStack Table.",
+  "license": "MIT",
+  "homepage": "https://iramilcsevics.github.io/grid-craft/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IraMilcsevics/grid-craft.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IraMilcsevics/grid-craft/issues"
+  },
+  "keywords": [
+    "react",
+    "typescript",
+    "tanstack-table",
+    "tanstack-virtual",
+    "data-grid",
+    "csv",
+    "virtual-scrolling"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

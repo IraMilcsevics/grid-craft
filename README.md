@@ -176,3 +176,7 @@ prototype/       Static design prototype
 Choices worth knowing about: TanStack Table owns row logic (filtering, sorting, sizing, visibility, order, paging, aggregation) and everything the user
 sees is built here. The column registry only enables the features the grid uses. The data layer has no React in it, which is why
 it can be tested and benchmarked on its own.
+
+## License
+
+[MIT](LICENSE)
