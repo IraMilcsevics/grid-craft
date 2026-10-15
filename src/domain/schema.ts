@@ -40,7 +40,7 @@ export const COLUMNS: readonly ColumnMeta[] = [
   { key: 'country', label: 'Country', kind: 'enum', width: 132, editable: true, options: COUNTRIES },
   { key: 'status', label: 'Status', kind: 'enum', width: 128, editable: true, options: STATUSES },
   { key: 'category', label: 'Category', kind: 'enum', width: 142, editable: true, options: CATEGORIES },
-  { key: 'qty', label: 'Qty', kind: 'number', width: 84, editable: true },
+  { key: 'qty', label: 'Qty', kind: 'number', width: 112, editable: true },
   { key: 'price', label: 'Unit price', kind: 'number', width: 116, editable: true },
   { key: 'total', label: 'Total', kind: 'number', width: 126, editable: false, computed: true },
   { key: 'created', label: 'Created', kind: 'date', width: 122, editable: true },

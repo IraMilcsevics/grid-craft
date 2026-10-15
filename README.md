@@ -1,8 +1,21 @@
 # GridCraft
 
-An advanced data grid built with React, TypeScript and TanStack Table v9. It is designed around three problems that
-real data tools run into: **a lot of rows**, **data that is wrong**, and **state that has to survive** (filters, sorting,
-columns). The demo is an order list of 10,000 rows in which about 6% of the rows are deliberately broken.
+[![CI](https://github.com/IraMilcsevics/grid-craft/actions/workflows/ci.yml/badge.svg)](https://github.com/IraMilcsevics/grid-craft/actions/workflows/ci.yml)
+
+**[Live demo](https://iramilcsevics.github.io/grid-craft/)** · React, TypeScript, TanStack Table v9 and TanStack Virtual · runs entirely in the browser
+
+An advanced data grid built around three problems that real data tools run into: **a lot of rows**, **data that is wrong**, and
+**state that has to survive** (filters, sorting, columns, your edits). The demo is an order list of 10,000 rows in which about 6% of
+the rows are deliberately broken, so validation, error review and CSV import always have something to work on.
+
+![The grid, with a cell being corrected and its validation message](docs/grid.png)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/import-report.png" alt="CSV import report listing problems by column and line"><br><sub>CSV import with a validation report. Parsing runs in a Web Worker.</sub></td>
+    <td width="50%"><img src="docs/views-and-performance.png" alt="A saved view, filters and the live performance panel"><br><sub>Saved views, filter chips and the live performance panel.</sub></td>
+  </tr>
+</table>
 
 The clickable design reference is [prototype/gridcraft-prototype.html](prototype/gridcraft-prototype.html).
 
@@ -34,6 +47,7 @@ npm run dev          # http://localhost:5173
 | `npm run build` / `npm run preview` | Production build and local preview |
 | `npm run bench:domain` | Headless benchmark of the data layer in Node |
 | `npm run bench:browser` | The in-app benchmark in headless Chrome against the production build (run `npm run build` first) |
+| `npm run screenshots` | Retakes the README images from the production build |
 
 Two URL flags are for testing: `?rows=100000` loads a bigger demo dataset (100 to 250,000) and `?virtual=off` draws
 every row, to show what virtualization saves. They are kept when the grid updates the address bar.
@@ -133,6 +147,15 @@ it, 10,000 rows take about 10 seconds to appear and scrolling is unusable. The 1
   Two tabs of the app share the same store and the last one to save wins. Undo history is not kept across a reload, only the edited cells and their markers.
 - The scroll numbers come from software rendering. Expect smoother scrolling on a machine with a GPU.
 
+## Deploying
+
+Pushing to `main` runs the checks (typecheck, tests, build) and then publishes `dist/` to GitHub Pages
+([workflow](.github/workflows/ci.yml)). Enable it once under *Settings, Pages, Source: GitHub Actions*.
+The build uses relative asset paths, so the same files work from any folder: GitHub Pages, a subfolder of another site, or an iframe.
+`scripts/check-subpath.mjs` loads the build from a subfolder URL and fails on a missing file or a broken worker.
+
+Saved views and stored data belong to the address the app is served from, so a move to another address starts empty.
+
 ## Project layout
 
 ```
@@ -143,7 +166,9 @@ src/
   workers/       CSV import worker
   lib/           Download and worker helpers
   styles/        Design tokens (dark by default, light follows the OS), app and grid CSS
-scripts/         bench-domain.ts, bench-browser.mjs
+scripts/         Benchmarks, screenshots, static server and subfolder check
+docs/            README images
+public/          Favicon
 bench-results/   Latest benchmark output
 prototype/       Static design prototype
 ```
