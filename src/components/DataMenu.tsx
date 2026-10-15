@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from 'react'
-import { useDismiss } from './useDismiss'
+import { useDismiss } from '../hooks/useDismiss'
+import type { SaveStatus } from '../hooks/useOrdersStore'
+import { fmt } from '../lib/format'
 
-export type SaveStatus = { kind: 'saved' } | { kind: 'saving' } | { kind: 'off'; reason: string } | { kind: 'error'; reason: string }
-
-interface DataMenuProps {
+export interface DataMenuProps {
   name: string
   rowCount: number
   kind: 'demo' | 'import'
@@ -13,7 +13,6 @@ interface DataMenuProps {
   onLoadDemo: () => void
 }
 
-const fmt = (n: number) => n.toLocaleString('en-US')
 
 const LABEL: Record<SaveStatus['kind'], string> = {
   saved: 'Saved in this browser',

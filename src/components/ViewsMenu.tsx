@@ -2,9 +2,9 @@ import { useCallback, useRef, useState } from 'react'
 import type { Preset } from '../domain/presets'
 import type { ViewState } from '../domain/view'
 import type { SavedView } from '../domain/viewStore'
-import { useDismiss } from './useDismiss'
+import { useDismiss } from '../hooks/useDismiss'
 
-interface ViewsMenuProps {
+export interface ViewsMenuProps {
   presets: Preset[]
   saved: SavedView[]
   activeId: string | null

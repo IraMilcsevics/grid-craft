@@ -192,7 +192,8 @@ Saved views and stored data belong to the address the app is served from, so a m
 ```
 src/
   domain/        Pure logic with tests: schema, validation, generator, CSV, filter syntax, edit history, views, URL codec
-  components/    Grid (TanStack Table + TanStack Virtual), toolbar, dialogs, views menu, performance panel
+  components/    Screen, toolbar, dialogs, menus, performance panel; components/grid/ holds the grid's parts
+  hooks/         State and behaviour: stored orders, views and the URL, row list and paging, update timing
   perf/          Update-to-paint timing store and the benchmark runner
   workers/       CSV import worker
   lib/           Download and worker helpers
@@ -204,6 +205,9 @@ public/          Favicon
 bench-results/   Latest benchmark output
 prototype/       Static design prototype
 ```
+
+`GridScreen` only wires things together: each concern (data and storage, views and the address bar, the row list and paging, timing) is a hook in `hooks/`,
+and the grid's keyboard and selection logic is one hook next to the grid.
 
 Choices worth knowing about: TanStack Table owns row logic (filtering, sorting, sizing, visibility, order, paging) and everything the user
 sees is built here. The column registry only enables the features the grid uses. The totals row is not one of them: a plain loop beat the general aggregation by a wide margin where it matters. The data layer has no React in it, which is why

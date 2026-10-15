@@ -2,8 +2,8 @@ import { useRef, useState, type ReactNode } from 'react'
 import { COLUMN_BY_KEY, type ColumnKey } from '../domain/schema'
 import { PAGE_SIZES, type RowMode } from '../domain/view'
 import { ERRORS_COLUMN, type OrderTable } from './columns'
-import { useDebouncedField } from './useDebouncedField'
-import { useDismiss } from './useDismiss'
+import { useDebouncedField } from '../hooks/useDebouncedField'
+import { useDismiss } from '../hooks/useDismiss'
 
 interface ToolbarProps {
   table: OrderTable
