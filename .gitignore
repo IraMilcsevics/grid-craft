@@ -6,3 +6,4 @@ tsconfig.tsbuildinfo
 .claude/
 .DS_Store
 dist-prof
+e2e-artifacts

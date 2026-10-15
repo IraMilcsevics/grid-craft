@@ -28,12 +28,13 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b --noEmit && tsc -p tsconfig.e2e.json",
     "bench:domain": "tsx scripts/bench-domain.ts",
     "bench:browser": "node scripts/bench-browser.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "contrast": "node scripts/check-contrast.mjs",
-    "lint": "oxlint --deny-warnings"
+    "lint": "oxlint --deny-warnings",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "@tanstack/react-table": "^9.3.1",
@@ -42,6 +43,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

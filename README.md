@@ -42,7 +42,8 @@ npm run dev          # http://localhost:5173
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Vite dev server |
-| `npm test` | Vitest for the data layer (validation, generator, CSV, filters, editing history, views) |
+| `npm test` | Vitest for the data layer (validation, generator, CSV, filters, editing history, views, storage) |
+| `npm run test:e2e` | Browser tests against the production build (run `npm run build` first): editing, keeping data after a reload, CSV import, views and links |
 | `npm run typecheck` | `tsc -b`, strict mode |
 | `npm run lint` | [Oxlint](https://oxc.rs/docs/guide/usage/linter): correctness rules, the rules of hooks and `exhaustive-deps`, zero warnings allowed |
 | `npm run contrast` | Checks every text and surface color pair in both themes against WCAG AA (4.5:1 for text, 3:1 for dots and borders) |
@@ -54,8 +55,18 @@ npm run dev          # http://localhost:5173
 Two URL flags are for testing: `?rows=100000` loads a bigger demo dataset (100 to 250,000) and `?virtual=off` draws
 every row, to show what virtualization saves. They are kept when the grid updates the address bar.
 
-Lint and contrast run in CI together with the typecheck, tests and build. Oxlint is used because typescript-eslint cannot yet run on TypeScript 7,
+Lint, contrast and the browser tests run in CI together with the typecheck, unit tests and build. Oxlint is used because typescript-eslint cannot yet run on TypeScript 7,
 which has no JavaScript compiler API. The few `eslint-disable` comments in the code each say why an effect is deliberately keyed on less than all of its inputs.
+
+## Browser tests
+
+`e2e/` holds nine tests that drive the production build in headless Chrome the way a person would: fix a broken cell and undo it, refuse an invalid value,
+move around with the keyboard, edit and reload, discard edits, import a CSV with errors and reload, apply a view and open its link, and scroll 20,000 rows.
+Each test runs in a fresh browser profile, so saved data never leaks between tests, and the build is served from a subfolder (`/grid-craft/`) as GitHub Pages
+serves it, so a broken relative path fails here. A test fails if the app throws or any file request fails. In CI a failing test uploads a screenshot.
+
+One of them is a regression test for a real bug found this way: closing an invalid edit by clicking elsewhere used to pull focus back to the grid, so
+text typed into the search box after clicking it went nowhere. The test fails when the fix is taken out and passes with it.
 
 ## Where the data lives
 
@@ -186,7 +197,8 @@ src/
   workers/       CSV import worker
   lib/           Download and worker helpers
   styles/        Design tokens (dark by default, light follows the OS), app and grid CSS
-scripts/         Benchmarks, screenshots, static server and subfolder check
+e2e/             Browser tests (Vitest and Puppeteer)
+scripts/         Benchmarks, screenshots, static server, contrast and subfolder checks
 docs/            README images
 public/          Favicon
 bench-results/   Latest benchmark output
